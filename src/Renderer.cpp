@@ -12,9 +12,7 @@ Renderer::Renderer() {
 
 Renderer::~Renderer() {
     _destroyDevice();
-    #ifdef ENABLE_DEBUG
     _destroyDebug();
-    #endif
     _destroyInstance();
 }
 
@@ -38,7 +36,7 @@ void Renderer::_initInstance() {
         std::cout << "Vulkan ERROR: Create instance failed\n";
         std::exit(-1);
     } else {
-        std::cout << "Vulkan SUCCESS: Created instance\n";
+        std::cout << "Vulkan INFO: Created instance\n";
     }
 }
 
@@ -69,22 +67,26 @@ void Renderer::_initDevice() {
         }
     }
     {
+        #ifdef ENABLE_DEBUG
         uint32_t layerCount = 0;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
         std::vector<VkLayerProperties> layerProperties(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
         for(auto &i : layerProperties) {
-            std::cout << "Vulkan INFO: Found instance layer " << i.layerName << "\t\t" << i.description << "\n";
+            std::cout << "Vulkan DEBUG: Found instance layer " << i.layerName << "\t\t" << i.description << "\n";
         }
+        #endif
     }
     {
+        #ifdef ENABLE_DEBUG
         uint32_t layerCount = 0;
         vkEnumerateDeviceLayerProperties(_gpu, &layerCount, nullptr);
         std::vector<VkLayerProperties> layerProperties(layerCount);
         vkEnumerateDeviceLayerProperties(_gpu, &layerCount, layerProperties.data());
         for(auto &i : layerProperties) {
-            std::cout << "Vulkan INFO: Found device layer " << i.layerName << "\t\t" << i.description << "\n";
+            std::cout << "Vulkan DEBUG: Found device layer " << i.layerName << "\t\t" << i.description << "\n";
         }
+        #endif
     }
 
     float queuePriorities[] {1.0f};
@@ -105,7 +107,7 @@ void Renderer::_initDevice() {
     if(err != VK_SUCCESS) {
         std::cout << "Vulkan ERROR: Unable to initialize device\n";
     } else {
-        std::cout << "Vulkan SUCCESS: Created Device\n";
+        std::cout << "Vulkan INFO: Created Device\n";
     }
 }
 
@@ -114,23 +116,24 @@ void Renderer::_setupDebug() {
     _instanceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
     _deviceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
     _instanceExtensions.push_back("VK_EXT_debug_report");
-    std::cout << "Vulkan INFO: debug build, enabling layers\n";
+    std::cout << "Vulkan DEBUG: debug build, enabling layers\n";
     #endif
 }
 
 PFN_vkCreateDebugReportCallbackEXT fvkCreateDebugReportCallbackEXT = nullptr;
 PFN_vkDestroyDebugReportCallbackEXT fvkDestroyDebugReportCallbackEXT = nullptr;
 
-VKAPI_ATTR VkBool32 VKAPI_CALL vulkanDebugCallback(
-    VkDebugReportFlagsEXT msgFlags,
-    VkDebugReportObjectTypeEXT objectType,
-    uint64_t srcObject,
-    size_t location,
-    int32_t msgCode,
-    const char *layerPrefix,
-    const char *msg,
-    void *userDate) {
-        
+VKAPI_ATTR VkBool32 VKAPI_CALL vulkanDebugCallback(VkDebugReportFlagsEXT msgFlags,
+                                                   VkDebugReportObjectTypeEXT objectType,
+                                                   uint64_t srcObject,
+                                                   size_t location,
+                                                   int32_t msgCode,
+                                                   const char *layerPrefix,
+                                                   const char *msg,
+                                                   void *userDate) {
+        #ifdef ENABLE_DEBUG
+        std::cout << "Vulkan DEBUG: " << msg << std::endl;
+        #endif
     }
 
 void Renderer::_initDebug() {
@@ -151,23 +154,27 @@ void Renderer::_initDebug() {
         VK_DEBUG_REPORT_ERROR_BIT_EXT | 
         VK_DEBUG_REPORT_DEBUG_BIT_EXT;
     fvkCreateDebugReportCallbackEXT(_instance, &debugCallbackCreateInfo, nullptr, &_debugReport);
+    std::cout << "Vulkan DEBUG: Created debug callbacks\n";
     #endif
 }
 
 void Renderer::_destroyDebug() {
+    #ifdef ENABLE_DEBUG
     fvkDestroyDebugReportCallbackEXT(_instance, _debugReport, nullptr);
     _debugReport = nullptr;
+    std::cout << "Vulkan DEBUG: Destroyed debug\n";
+    #endif
 }
 
 void Renderer::_destroyDevice() {
     vkDestroyDevice(_device, nullptr);
     _device = nullptr;
-    std::cout << "Vulkan SUCCESS: Destroyed device\n";
+    std::cout << "Vulkan INFO: Destroyed device\n";
 }
 
 void Renderer::_destroyInstance() {
     vkDestroyInstance(_instance, nullptr);
     _instance = nullptr;
-    std::cout << "Vulkan SUCCESS: Destroyed instance\n";
+    std::cout << "Vulkan INFO: Destroyed instance\n";
 }
 
