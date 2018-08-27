@@ -1,15 +1,19 @@
 VULKAN_SDK_PATH = /home/aaron/vulkan_sdk/1.1.82.1/x86_64
-CFLAGS = -std=c++11 -I$(VULKAN_SDK_PATH)/include
+CXXFLAGS = -std=c++11 -I$(VULKAN_SDK_PATH)/include
 #LDFLAGS = -L$(VULKAN_SDK_PATH)/lib `pkg-config --static --libs glfw3` -lvulkan
 LDFLAGS = -lvulkan
+CXX_DEBUG_FLAGS = $(CXXFLAGS) -DENABLE_DEBUG
 
 all: src/main.cpp
-	g++ $(CFLAGS) -o vulkan src/main.cpp src/Renderer.cpp $(LDFLAGS) -ggdb
+	g++ $(CXXFLAGS) -o bin/vulkan src/main.cpp src/Renderer.cpp $(LDFLAGS) -O3
+
+debug: src/main.cpp
+	g++ $(CXX_DEBUG_FLAGS) -o bin/vulkan src/main.cpp src/Renderer.cpp $(LDFLAGS) -ggdb
 
 .PHONY: test clean
 
-test: all
-	./vulkan
+test: clean debug
+	./bin/vulkan
 
 clean:
-	rm -f vulkan
+	rm -f bin/*

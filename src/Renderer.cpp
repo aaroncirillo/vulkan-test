@@ -4,25 +4,34 @@
 #include <vector>
 
 Renderer::Renderer() {
+    _setupDebug();
     _initInstance();
+    _initDebug();
     _initDevice();
 }
 
 Renderer::~Renderer() {
     _destroyDevice();
+    #ifdef ENABLE_DEBUG
+    _destroyDebug();
+    #endif
     _destroyInstance();
 }
 
 void Renderer::_initInstance() {
     VkApplicationInfo applicationInfo {};
     applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    applicationInfo.apiVersion = VK_MAKE_VERSION(1, 0, 2);
+    applicationInfo.apiVersion = VK_MAKE_VERSION(1, 0, 3);
     applicationInfo.applicationVersion = VK_MAKE_VERSION(0, 1, 0);
     applicationInfo.pApplicationName = "Vulkan Test Program";
 
     VkInstanceCreateInfo instanceCreateInfo {};
     instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceCreateInfo.pApplicationInfo = &applicationInfo;
+    instanceCreateInfo.enabledLayerCount = _instanceLayers.size();
+    instanceCreateInfo.ppEnabledLayerNames = _instanceLayers.data();
+    instanceCreateInfo.enabledExtensionCount = _instanceExtensions.size();
+    instanceCreateInfo.ppEnabledExtensionNames = _instanceExtensions.data();
 
     auto err = vkCreateInstance(&instanceCreateInfo, nullptr, &_instance);
     if(err != VK_SUCCESS) {
@@ -30,7 +39,7 @@ void Renderer::_initInstance() {
         std::exit(-1);
     } else {
         std::cout << "Vulkan SUCCESS: Created instance\n";
-    }    
+    }
 }
 
 void Renderer::_initDevice() {
@@ -59,6 +68,24 @@ void Renderer::_initDevice() {
             std::exit(-1);
         }
     }
+    {
+        uint32_t layerCount = 0;
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+        std::vector<VkLayerProperties> layerProperties(layerCount);
+        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
+        for(auto &i : layerProperties) {
+            std::cout << "Vulkan INFO: Found instance layer " << i.layerName << "\t\t" << i.description << "\n";
+        }
+    }
+    {
+        uint32_t layerCount = 0;
+        vkEnumerateDeviceLayerProperties(_gpu, &layerCount, nullptr);
+        std::vector<VkLayerProperties> layerProperties(layerCount);
+        vkEnumerateDeviceLayerProperties(_gpu, &layerCount, layerProperties.data());
+        for(auto &i : layerProperties) {
+            std::cout << "Vulkan INFO: Found device layer " << i.layerName << "\t\t" << i.description << "\n";
+        }
+    }
 
     float queuePriorities[] {1.0f};
     VkDeviceQueueCreateInfo deviceQueueCreateInfo {};
@@ -71,6 +98,8 @@ void Renderer::_initDevice() {
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     deviceCreateInfo.queueCreateInfoCount = 1;
     deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
+    deviceCreateInfo.enabledLayerCount = _deviceLayers.size();
+    deviceCreateInfo.ppEnabledLayerNames = _deviceLayers.data();
 
     auto err = vkCreateDevice(_gpu, &deviceCreateInfo, nullptr, &_device);
     if(err != VK_SUCCESS) {
@@ -78,6 +107,56 @@ void Renderer::_initDevice() {
     } else {
         std::cout << "Vulkan SUCCESS: Created Device\n";
     }
+}
+
+void Renderer::_setupDebug() {
+    #ifdef ENABLE_DEBUG
+    _instanceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
+    _deviceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
+    _instanceExtensions.push_back("VK_EXT_debug_report");
+    std::cout << "Vulkan INFO: debug build, enabling layers\n";
+    #endif
+}
+
+PFN_vkCreateDebugReportCallbackEXT fvkCreateDebugReportCallbackEXT = nullptr;
+PFN_vkDestroyDebugReportCallbackEXT fvkDestroyDebugReportCallbackEXT = nullptr;
+
+VKAPI_ATTR VkBool32 VKAPI_CALL vulkanDebugCallback(
+    VkDebugReportFlagsEXT msgFlags,
+    VkDebugReportObjectTypeEXT objectType,
+    uint64_t srcObject,
+    size_t location,
+    int32_t msgCode,
+    const char *layerPrefix,
+    const char *msg,
+    void *userDate) {
+        
+    }
+
+void Renderer::_initDebug() {
+    #ifdef ENABLE_DEBUG
+    fvkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(_instance, "vkCreateDebugReportCallbackEXT");
+    fvkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(_instance, "vkDestroyDebugReportCallbackEXT");
+    if(fvkCreateDebugReportCallbackEXT == nullptr || fvkDestroyDebugReportCallbackEXT == nullptr) {
+        std::cout << "Vulkan ERROR: failed to initialize debug layers\n";
+        std::exit(-1);
+    }
+    VkDebugReportCallbackCreateInfoEXT debugCallbackCreateInfo {};
+    debugCallbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+    debugCallbackCreateInfo.pfnCallback = vulkanDebugCallback;
+    debugCallbackCreateInfo.flags = 
+        VK_DEBUG_REPORT_INFORMATION_BIT_EXT |
+        VK_DEBUG_REPORT_WARNING_BIT_EXT |
+        VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
+        VK_DEBUG_REPORT_ERROR_BIT_EXT | 
+        VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+    fvkCreateDebugReportCallbackEXT(_instance, &debugCallbackCreateInfo, nullptr, &_debugReport);
+    #endif
+}
+
+void Renderer::_destroyDebug() {
+    fvkDestroyDebugReportCallbackEXT(_instance, _debugReport, nullptr);
+    _debugReport = nullptr;
 }
 
 void Renderer::_destroyDevice() {
