@@ -40,7 +40,7 @@ void Renderer::_initInstance() {
     instanceCreateInfo.ppEnabledExtensionNames = _instanceExtensions.data();
 
     errorCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &_instance));
-    logMessage(INFO, "instance initialized");
+    logMessage(INFO, "initialized instance");
 }
 
 void Renderer::_initDevice() {
@@ -75,7 +75,9 @@ void Renderer::_initDevice() {
         std::vector<VkLayerProperties> layerProperties(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
         for(auto &i : layerProperties) {
-            
+            std::string msg(i.layerName);
+            msg = "found instance layer " + msg;
+            logMessage(DEBUG, msg.c_str());
         }
     }
     {
@@ -84,7 +86,9 @@ void Renderer::_initDevice() {
         std::vector<VkLayerProperties> layerProperties(layerCount);
         vkEnumerateDeviceLayerProperties(_gpu, &layerCount, layerProperties.data());
         for(auto &i : layerProperties) {
-            logMessage(DEBUG, "Found device layer");
+            std::string msg(i.layerName);
+            msg = "found instance layer " + msg;
+            logMessage(DEBUG, msg.c_str());
         }
     }
 
@@ -103,7 +107,7 @@ void Renderer::_initDevice() {
     deviceCreateInfo.ppEnabledLayerNames = _deviceLayers.data();
 
     errorCheck(vkCreateDevice(_gpu, &deviceCreateInfo, nullptr, &_device));
-    logMessage(INFO, "device initialized");
+    logMessage(INFO, "initialized device");
 }
 
 void Renderer::_setupDebug() {
