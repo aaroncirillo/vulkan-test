@@ -99,3 +99,31 @@ void errorCheck(VkResult result) {
         std::exit(-1);
     }
 }
+
+void logMessage(LogLevel logLevel, const char *msg) {
+    if(logLevel == ERROR) {
+        std::cerr << "Vulkan ERROR: " << msg << std::endl;
+    }
+    if(CURRENT_LOG_LEVEL > ERROR) {
+        switch(logLevel){
+            case WARN:
+                std::cout << "Vulkan WARN: " << msg << std::endl;
+                break;
+            case INFO:
+                if(CURRENT_LOG_LEVEL > WARN) {
+                    std::cout << "Vulkan INFO: " << msg << std::endl;
+                }
+                break;
+            case DEBUG:
+                if(CURRENT_LOG_LEVEL > INFO) {
+                    std::cout << "Vulkan DEBUG: " << msg << std::endl;
+                }
+                break;
+            case TRACE:
+                if(CURRENT_LOG_LEVEL > DEBUG) {
+                    std::cout << "Vulkan TRACE: " << msg << std::endl;
+                }
+                break;
+        }
+    }
+}
