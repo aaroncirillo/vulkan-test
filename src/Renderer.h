@@ -7,6 +7,11 @@ class Renderer {
     public:
         Renderer();
         ~Renderer();
+        VkInstance getInstance();
+        VkDevice getDevice();
+        VkPhysicalDevice getPhysicalDevice();
+        VkQueue getQueue();
+        uint32_t getGraphicsFamilyIndex();
     
     private:
         void _initInstance();
@@ -17,10 +22,11 @@ class Renderer {
         void _initDebug();
         void _destroyDebug();
 
-        VkInstance                  _instance               = nullptr;
-        VkDevice                    _device                 = nullptr;
-        VkPhysicalDevice            _gpu                    = nullptr;
-        VkDebugReportCallbackEXT    _debugReport            = nullptr;
+        VkInstance                  _instance               = VK_NULL_HANDLE;
+        VkDevice                    _device                 = VK_NULL_HANDLE;
+        VkPhysicalDevice            _gpu                    = VK_NULL_HANDLE;
+        VkDebugReportCallbackEXT    _debugReport            = VK_NULL_HANDLE;
+        VkQueue                     _queue                  = VK_NULL_HANDLE;
         
         uint32_t                    _graphicsFamilyIndex    = 0;
         

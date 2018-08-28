@@ -108,6 +108,8 @@ void Renderer::_initDevice() {
 
     errorCheck(vkCreateDevice(_gpu, &deviceCreateInfo, nullptr, &_device));
     logMessage(INFO, "initialized device");
+    vkGetDeviceQueue(_device, _graphicsFamilyIndex, 0, &_queue);
+    logMessage(DEBUG, "initialized queue");
 }
 
 void Renderer::_setupDebug() {
@@ -146,26 +148,46 @@ void Renderer::_initDebug() {
         VK_DEBUG_REPORT_WARNING_BIT_EXT |
         VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
         VK_DEBUG_REPORT_ERROR_BIT_EXT | 
-        VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+        //VK_DEBUG_REPORT_DEBUG_BIT_EXT;
     fvkCreateDebugReportCallbackEXT(_instance, &debugCallbackCreateInfo, nullptr, &_debugReport);
     logMessage(DEBUG, "created debug callbacks");
 }
 
+VkInstance Renderer::getInstance() {
+    return _instance;
+}
+
+VkDevice Renderer::getDevice() {
+    return _device;
+}
+
+VkPhysicalDevice Renderer::getPhysicalDevice() {
+    return _gpu;
+}
+
+VkQueue Renderer::getQueue() {
+    return _queue;
+}
+
+uint32_t Renderer::getGraphicsFamilyIndex() {
+    return _graphicsFamilyIndex;
+}
+
 void Renderer::_destroyDebug() {
     fvkDestroyDebugReportCallbackEXT(_instance, _debugReport, nullptr);
-    _debugReport = nullptr;
+    _debugReport = VK_NULL_HANDLE;
     logMessage(DEBUG, "destroyed debug");
 }
 
 void Renderer::_destroyDevice() {
     vkDestroyDevice(_device, nullptr);
-    _device = nullptr;
+    _device = VK_NULL_HANDLE;
     logMessage(INFO, "destroyed device");
 }
 
 void Renderer::_destroyInstance() {
     vkDestroyInstance(_instance, nullptr);
-    _instance = nullptr;
+    _instance = VK_NULL_HANDLE;
     logMessage(INFO, "destroyed instance");
 }
 
